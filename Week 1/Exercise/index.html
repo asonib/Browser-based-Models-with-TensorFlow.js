@@ -12,7 +12,7 @@
             // can predict from the data whether the diagnosis is malignant or benign.
             const trainingData = tf.data.csv(trainingUrl, {
                 
-                columnConfig : {
+                columnConfigs : {
                     diagnosis : {
                         isLabel : true
                     }
@@ -37,7 +37,7 @@
             // can predict from the data whether the diagnosis is malignant or benign.
             const testingData = tf.data.csv(testingUrl, {
                 
-                columnConfig : {
+                columnConfigs : {
                     diagnosis : {
                         isLabel: true
                     }
