@@ -12,9 +12,9 @@
             // can predict from the data whether the diagnosis is malignant or benign.
             const trainingData = tf.data.csv(trainingUrl, {
                 
-                columnConfigs : {
-                    diagnosis : {
-                        isLabel : true
+                columnConfigs: {
+                    diagnosis: {
+                        isLabel: true
                     }
                 }
                 
@@ -26,7 +26,7 @@
             // a one-hot encoded array of label values like we did in the
             // Iris dataset example. 
             const convertedTrainingData = trainingData.map(({xs, ys}) => {
-                      return{ xs: Object.values(xs), ys: Object.values(labels)};
+                      return{ xs: Object.values(xs), ys: Object.values(ys)};
                   }).batch(10);
                   
             const testingUrl = 'wdbc-test.csv';
@@ -37,8 +37,8 @@
             // can predict from the data whether the diagnosis is malignant or benign.
             const testingData = tf.data.csv(testingUrl, {
                 
-                columnConfigs : {
-                    diagnosis : {
+                columnConfigs: {
+                    diagnosis: {
                         isLabel: true
                     }
                 }
@@ -51,7 +51,7 @@
             // a one-hot encoded array of label values like we did in the
             // Iris dataset example. 
             const convertedTestingData = testingData.map(({xs, ys}) => {
-                      return{ xs: Object.values(xs), ys: Object.values(labels)};
+                      return{ xs: Object.values(xs), ys: Object.values(ys)};
                   }).batch(10);
                   
 
@@ -70,27 +70,24 @@
             // using ReLu activation functions where applicable. For this dataset only a few
             // hidden layers should be enough to get a high accuracy.  
             const model = tf.sequential();
-            
-            model.add(tf.layers.dense({inputShape: [numOfFeatures], activation: "sigmoid", units: 5}))
-            model.add(tf.layers.dense({activation: "softmax", units: 1}))
+            model.add(tf.layers.dense({inputShape: [numOfFeatures], activation: "relu", units: 5}))
+            model.add(tf.layers.dense({activation: "sigmoid", units: 1}));
 
             
             
             // Compile the model using the binaryCrossentropy loss, 
             // the rmsprop optimizer, and accuracy for your metrics. 
-            model.compile({loss: "binaryCrossentropy", optimizer: tf.train.rmsprop, metrics: ['accuracy']});
+            model.compile({loss: "binaryCrossentropy", optimizer: tf.train.rmsprop(0.06), metrics : ['accuracy']});
             
             
             await model.fitDataset(convertedTrainingData, 
-                            {
-                                epochs:100,
-                                validationData: convertedTestingData,
-                                callbacks:{
-                                    onEpochEnd: async(epoch, logs) =>{
-                                        console.log("Epoch: " + epoch + " Loss: " + logs.loss + " Accuracy: " + logs.acc);
-                                    }
-                            }
-                        });
+                             {epochs:100,
+                              validationData: convertedTestingData,
+                              callbacks:{
+                                  onEpochEnd: async(epoch, logs) =>{
+                                      console.log("Epoch: " + epoch + " Loss: " + logs.loss + " Accuracy: " + logs.acc);
+                                  }
+                              }});
             await model.save('downloads://my_model');
         }
         run();
