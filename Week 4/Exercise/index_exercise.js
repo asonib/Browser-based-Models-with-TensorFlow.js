@@ -2,30 +2,49 @@ let mobilenet;
 let model;
 const webcam = new Webcam(document.getElementById('wc'));
 const dataset = new RPSDataset();
-var rockSamples=0, paperSamples=0, scissorsSamples=0;
+var rockSamples=0, paperSamples=0, scissorsSamples=0, spockSamples=0, lizardSamples=0;
 let isPredicting = false;
 
 async function loadMobilenet() {
-  const mobilenet = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
+  const mobilenet = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_1.0_224/model.json');
   const layer = mobilenet.getLayer('conv_pw_13_relu');
   return tf.model({inputs: mobilenet.inputs, outputs: layer.output});
 }
 
 async function train() {
   dataset.ys = null;
-  dataset.encodeLabels(3);
+  dataset.encodeLabels(5);
+    
+  // In the space below create a neural network that can classify hand gestures
+  // corresponding to rock, paper, scissors, lizard, and spock. The first layer
+  // of your network should be a flatten layer that takes as input the output
+  // from the pre-trained MobileNet model. Since we have 5 classes, your output
+  // layer should have 5 units and a softmax activation function. You are free
+  // to use as many hidden layers and neurons as you like.  
+  // HINT: Take a look at the Rock-Paper-Scissors example. We also suggest
+  // using ReLu activation functions where applicable.
   model = tf.sequential({
     layers: [
       tf.layers.flatten({inputShape: mobilenet.outputs[0].shape.slice(1)}),
       tf.layers.dense({ units: 100, activation: 'relu'}),
-      tf.layers.dense({ units: 3, activation: 'softmax'})
+      tf.layers.dense({ units: 80, activation: 'relu'}),
+      tf.layers.dense({ units: 50, activation: 'relu'}),
+      tf.layers.dense({ units: 5, activation: 'softmax'})
     ]
   });
+    
+   
+  // Set the optimizer to be tf.train.adam() with a learning rate of 0.0001.
   const optimizer = tf.train.adam(0.0001);
+    
+        
+  // Compile the model using the categoricalCrossentropy loss, and
+  // the optimizer you defined above.
   model.compile({optimizer: optimizer, loss: 'categoricalCrossentropy'});
+ 
   let loss = 0;
   model.fit(dataset.xs, dataset.ys, {
-    epochs: 10,
+    epochs: 20,
     callbacks: {
       onBatchEnd: async (batch, logs) => {
         loss = logs.loss.toFixed(5);
@@ -34,6 +53,7 @@ async function train() {
       }
    });
 }
+
 
 function handleButton(elem){
 	switch(elem.id){
@@ -48,7 +68,16 @@ function handleButton(elem){
 		case "2":
 			scissorsSamples++;
 			document.getElementById("scissorssamples").innerText = "Scissors samples:" + scissorsSamples;
-			break;
+			break;  
+		case "3":
+			spockSamples++;
+			document.getElementById("spocksamples").innerText = "Spock samples:" + spockSamples;
+      break;
+    case "4":
+      lizardSamples++;
+      document.getElementById("lizardsamples").innerText = "Lizard samples:" + lizardSamples;
+      break;
+            
 	}
 	label = parseInt(elem.id);
 	const img = webcam.capture();
@@ -76,6 +105,13 @@ async function predict() {
 		case 2:
 			predictionText = "I see Scissors";
 			break;
+		case 3:
+			predictionText = "I see Spock";
+      break;
+    case 4:
+      predictionText = "I see Lizard";
+      break;
+
 	}
 	document.getElementById("prediction").innerText = predictionText;
 			
@@ -88,6 +124,7 @@ async function predict() {
 
 function doTraining(){
 	train();
+	alert("Training Done!")
 }
 
 function startPredicting(){
@@ -100,13 +137,18 @@ function stopPredicting(){
 	predict();
 }
 
+
+function saveModel(){
+    model.save('downloads://my_model');
+}
+
+
 async function init(){
 	await webcam.setup();
 	mobilenet = await loadMobilenet();
 	tf.tidy(() => mobilenet.predict(webcam.capture()));
 		
 }
-
 
 
 init();
